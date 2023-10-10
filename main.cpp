@@ -85,6 +85,54 @@ public:
             lines = undoStack.back();
         }
     }
+    void cut(int lineIndex, int symbolIndex, int numSymbols) {
+        if (lineIndex >= 0 && lineIndex < lines.size() && symbolIndex >= 0) {
+            std::string &line = lines[lineIndex];
+            if (symbolIndex < line.size()) {
+                clipboard = line.substr(symbolIndex, numSymbols);
+
+                line.erase(symbolIndex, numSymbols);
+
+                updateHistory();
+                std::cout << "Text has been cut" << std::endl;
+            } else {
+                std::cout << "Symbol index is out of range" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid line index" << std::endl;
+        }
+    }
+
+    void copy(int lineIndex, int symbolIndex, int numSymbols) {
+        if (lineIndex >= 0 && lineIndex < lines.size() && symbolIndex >= 0) {
+            const std::string &line = lines[lineIndex];
+            if (symbolIndex < line.size()) {
+                clipboard = line.substr(symbolIndex, numSymbols);
+                std::cout << "Text has been copied" << std::endl;
+            } else {
+                std::cout << "Symbol index is out of range" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid line index" << std::endl;
+        }
+    }
+
+    void paste(int lineIndex, int symbolIndex) {
+        if (lineIndex >= 0 && lineIndex <= lines.size() && symbolIndex >= 0) {
+            if (!clipboard.empty()) {
+                std::string &line = lines[lineIndex];
+                line.insert(symbolIndex, clipboard);
+                updateHistory();
+                std::cout << "Text has been pasted" << std::endl;
+            } else {
+                std::cout << "Clipboard is empty" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid line index" << std::endl;
+        }
+    }
+
+    std::string clipboard;
 
     const std::vector<std::string>& getLines() const {
         return lines;
@@ -179,6 +227,9 @@ int main() {
         std::cout << "8. Delete text" << std::endl;
         std::cout << "9. Undo" << std::endl;
         std::cout << "10. Redo" << std::endl;
+        std::cout << "11. Cut" << std::endl;
+        std::cout << "12. Copy" << std::endl;
+        std::cout << "13. Paste" << std::endl;
         std::cout << "14. Insert text with replacement" << std::endl;
         std::cout << "20. Clear the text" << std::endl;
 
@@ -223,7 +274,7 @@ int main() {
                 int lineIndex, symbolIndex;
                 std::cout << "Choose line and symbol index: ";
                 std::cin >> lineIndex >> symbolIndex;
-                std::cin.ignore(); // Clear the input buffer
+                std::cin.ignore();
                 std::string input;
                 std::cout << "Enter text to insert: ";
                 std::getline(std::cin, input);
@@ -255,11 +306,32 @@ int main() {
                 std::cout << "Redo performed" << std::endl;
                 break;
             }
+            case 11: {
+                int cutLineIndex, cutSymbolIndex, numSymbolsToCut;
+                std::cout << "Choose line, symbol index, and number of symbols to cut: ";
+                std::cin >> cutLineIndex >> cutSymbolIndex >> numSymbolsToCut;
+                text.cut(cutLineIndex, cutSymbolIndex, numSymbolsToCut);
+                break;
+            }
+            case 12: {
+                int copyLineIndex, copySymbolIndex, numSymbolsToCopy;
+                std::cout << "Choose line, symbol index, and number of symbols to copy: ";
+                std::cin >> copyLineIndex >> copySymbolIndex >> numSymbolsToCopy;
+                text.copy(copyLineIndex, copySymbolIndex, numSymbolsToCopy);
+                break;
+            }
+            case 13: {
+                int pasteLineIndex, pasteSymbolIndex;
+                std::cout << "Choose line and symbol index for pasting: ";
+                std::cin >> pasteLineIndex >> pasteSymbolIndex;
+                text.paste(pasteLineIndex, pasteSymbolIndex);
+                break;
+            }
             case 14: {
                 int lineIndex, symbolIndex;
                 std::cout << "Choose line and symbol index: ";
                 std::cin >> lineIndex >> symbolIndex;
-                std::cin.ignore(); // Clear the input buffer
+                std::cin.ignore();
                 std::string input;
                 std::cout << "Enter text to insert (with replacement): ";
                 std::getline(std::cin, input);
