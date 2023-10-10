@@ -2,23 +2,29 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <stack>
 
 class Text {
 public:
     Text() {
         currentLine = 0;
+        undoStack.push_back(lines);
+        maxHistorySize = 3;
     }
 
     void append(const std::string &text) {
         if (currentLine >= lines.size()) {
             lines.push_back(text);
         } else {
-            lines[currentLine] += "\n" + text; // Add a newline separator
+            lines[currentLine] += "\n" + text;
         }
+        updateHistory();
     }
 
     void newLine() {
         currentLine++;
+        lines.push_back("");
+        updateHistory();
     }
 
     void insert(int lineIndex, int symbolIndex, const std::string &text, bool replace) {
@@ -28,14 +34,14 @@ public:
                 if (replace) {
                     if (symbolIndex + text.length() <= line.length()) {
                         line.replace(symbolIndex, text.length(), text);
-                        std::cout << "Text replaced successfully" << std::endl;
                     } else {
                         std::cout << "Replacement text exceeds line boundary" << std::endl;
+                        return;
                     }
                 } else {
                     line.insert(symbolIndex, text);
-                    std::cout << "Text inserted successfully" << std::endl;
                 }
+                updateHistory();
             } else {
                 std::cout << "Symbol index is out of range" << std::endl;
             }
@@ -49,7 +55,7 @@ public:
             std::string &line = lines[lineIndex];
             if (symbolIndex < line.size()) {
                 line.erase(symbolIndex, numSymbols);
-                std::cout << "Text deleted successfully" << std::endl;
+                updateHistory();
             } else {
                 std::cout << "Symbol index is out of range" << std::endl;
             }
@@ -61,6 +67,23 @@ public:
     void clear() {
         lines.clear();
         currentLine = 0;
+        updateHistory();
+    }
+
+    void undo() {
+        if (undoStack.size() > 1) {
+            redoStack.push_back(undoStack.back());
+            undoStack.pop_back();
+            lines = undoStack.back();
+        }
+    }
+
+    void redo() {
+        if (!redoStack.empty()) {
+            undoStack.push_back(redoStack.back());
+            redoStack.pop_back();
+            lines = undoStack.back();
+        }
     }
 
     const std::vector<std::string>& getLines() const {
@@ -70,6 +93,17 @@ public:
 private:
     std::vector<std::string> lines;
     int currentLine;
+    std::vector<std::vector<std::string>> undoStack;
+    std::vector<std::vector<std::string>> redoStack;
+    int maxHistorySize;
+
+    void updateHistory() {
+        undoStack.push_back(lines);
+        if (undoStack.size() > maxHistorySize) {
+            undoStack.erase(undoStack.begin());
+        }
+        redoStack.clear();
+    }
 };
 
 class FileManager {
@@ -143,8 +177,10 @@ int main() {
         std::cout << "6. Insert text by line and symbol index" << std::endl;
         std::cout << "7. Search for text" << std::endl;
         std::cout << "8. Delete text" << std::endl;
-        std::cout << "9. Clear the text" << std::endl;
-        std::cout << "14. Insert text with replacement" << std::endl; // New command
+        std::cout << "9. Undo" << std::endl;
+        std::cout << "10. Redo" << std::endl;
+        std::cout << "14. Insert text with replacement" << std::endl;
+        std::cout << "20. Clear the text" << std::endl;
 
         int choice;
         std::cout << "Enter your choice: ";
@@ -152,7 +188,7 @@ int main() {
 
         switch (choice) {
             case 1: {
-                std::cin.ignore(); // Clear the input buffer
+                std::cin.ignore();
                 std::string input;
                 std::cout << "Enter text to append: ";
                 std::getline(std::cin, input);
@@ -191,11 +227,11 @@ int main() {
                 std::string input;
                 std::cout << "Enter text to insert: ";
                 std::getline(std::cin, input);
-                text.insert(lineIndex, symbolIndex, input, false); // Insert without replacement
+                text.insert(lineIndex, symbolIndex, input, false);
                 break;
             }
             case 7: {
-                std::cin.ignore(); // Clear the input buffer
+                std::cin.ignore();
                 std::string search;
                 std::cout << "Enter text to search: ";
                 std::getline(std::cin, search);
@@ -210,19 +246,29 @@ int main() {
                 break;
             }
             case 9: {
-                text.clear();
-                std::cout << "Text cleared" << std::endl;
+                text.undo();
+                std::cout << "Undo performed" << std::endl;
+                break;
+            }
+            case 10: {
+                text.redo();
+                std::cout << "Redo performed" << std::endl;
                 break;
             }
             case 14: {
                 int lineIndex, symbolIndex;
                 std::cout << "Choose line and symbol index: ";
                 std::cin >> lineIndex >> symbolIndex;
-                std::cin.ignore();
+                std::cin.ignore(); // Clear the input buffer
                 std::string input;
                 std::cout << "Enter text to insert (with replacement): ";
                 std::getline(std::cin, input);
                 text.insert(lineIndex, symbolIndex, input, true);
+                break;
+            }
+            case 20: {
+                text.clear();
+                std::cout << "Text cleared" << std::endl;
                 break;
             }
             default: {
