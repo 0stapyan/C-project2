@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <cstring>
+#include <string>
 
 class Text {
 public:
@@ -11,21 +11,31 @@ public:
 
     void append(const std::string &text) {
         if (currentLine >= lines.size()) {
-            lines.push_back({});
+            lines.push_back(text);
+        } else {
+            lines[currentLine] += "\n" + text; // Add a newline separator
         }
-        lines[currentLine].push_back(text);
     }
 
     void newLine() {
         currentLine++;
     }
 
-    void insert(int lineIndex, int symbolIndex, const std::string &text) {
+    void insert(int lineIndex, int symbolIndex, const std::string &text, bool replace) {
         if (lineIndex >= 0 && lineIndex < lines.size() && symbolIndex >= 0) {
-            if (lineIndex < lines.size() && symbolIndex <= lines[lineIndex].front().size()) {
-                std::string &line = lines[lineIndex].front();
-                line.insert(symbolIndex, text);
-                std::cout << "Text inserted successfully" << std::endl;
+            if (lineIndex < lines.size() && symbolIndex <= lines[lineIndex].size()) {
+                std::string &line = lines[lineIndex];
+                if (replace) {
+                    if (symbolIndex + text.length() <= line.length()) {
+                        line.replace(symbolIndex, text.length(), text);
+                        std::cout << "Text replaced successfully" << std::endl;
+                    } else {
+                        std::cout << "Replacement text exceeds line boundary" << std::endl;
+                    }
+                } else {
+                    line.insert(symbolIndex, text);
+                    std::cout << "Text inserted successfully" << std::endl;
+                }
             } else {
                 std::cout << "Symbol index is out of range" << std::endl;
             }
@@ -36,7 +46,7 @@ public:
 
     void deleteText(int lineIndex, int symbolIndex, int numSymbols) {
         if (lineIndex >= 0 && lineIndex < lines.size() && symbolIndex >= 0) {
-            std::string &line = lines[lineIndex].front();
+            std::string &line = lines[lineIndex];
             if (symbolIndex < line.size()) {
                 line.erase(symbolIndex, numSymbols);
                 std::cout << "Text deleted successfully" << std::endl;
@@ -53,12 +63,12 @@ public:
         currentLine = 0;
     }
 
-    const std::vector<std::vector<std::string>>& getLines() const {
+    const std::vector<std::string>& getLines() const {
         return lines;
     }
 
 private:
-    std::vector<std::vector<std::string>> lines;
+    std::vector<std::string> lines;
     int currentLine;
 };
 
@@ -67,11 +77,8 @@ public:
     static void saveToFile(const std::string &fileName, const Text &text) {
         std::ofstream file(fileName);
         if (file.is_open()) {
-            for (const auto &lines : text.getLines()) {
-                for (const auto &line : lines) {
-                    file << line;
-                }
-                file << '\n';
+            for (const auto &line : text.getLines()) {
+                file << line << '\n';
             }
             file.close();
             std::cout << "Text has been saved successfully" << std::endl;
@@ -102,11 +109,8 @@ public:
     void printText(const Text &text) {
         std::cout << "Current Text:" << std::endl;
         const auto &lines = text.getLines();
-        for (const auto &lineGroup : lines) {
-            for (const auto &line : lineGroup) {
-                std::cout << line;
-            }
-            std::cout << '\n';
+        for (const auto &line : lines) {
+            std::cout << line << '\n';
         }
     }
 
@@ -114,7 +118,7 @@ public:
         std::cout << "Text is present in these positions:" << std::endl;
         const auto &lines = text.getLines();
         for (int i = 0; i < lines.size(); i++) {
-            const std::string &line = lines[i].front();
+            const std::string &line = lines[i];
             size_t position = 0;
             while ((position = line.find(search, position)) != std::string::npos) {
                 std::cout << "Line " << i << ", Symbol " << position << std::endl;
@@ -140,6 +144,7 @@ int main() {
         std::cout << "7. Search for text" << std::endl;
         std::cout << "8. Delete text" << std::endl;
         std::cout << "9. Clear the text" << std::endl;
+        std::cout << "14. Insert text with replacement" << std::endl; // New command
 
         int choice;
         std::cout << "Enter your choice: ";
@@ -186,7 +191,7 @@ int main() {
                 std::string input;
                 std::cout << "Enter text to insert: ";
                 std::getline(std::cin, input);
-                text.insert(lineIndex, symbolIndex, input);
+                text.insert(lineIndex, symbolIndex, input, false); // Insert without replacement
                 break;
             }
             case 7: {
@@ -207,6 +212,17 @@ int main() {
             case 9: {
                 text.clear();
                 std::cout << "Text cleared" << std::endl;
+                break;
+            }
+            case 14: {
+                int lineIndex, symbolIndex;
+                std::cout << "Choose line and symbol index: ";
+                std::cin >> lineIndex >> symbolIndex;
+                std::cin.ignore();
+                std::string input;
+                std::cout << "Enter text to insert (with replacement): ";
+                std::getline(std::cin, input);
+                text.insert(lineIndex, symbolIndex, input, true);
                 break;
             }
             default: {
