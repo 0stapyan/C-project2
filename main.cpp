@@ -34,6 +34,20 @@ public:
         }
     }
 
+    void deleteText(int lineIndex, int symbolIndex, int numSymbols) {
+        if (lineIndex >= 0 && lineIndex < lines.size() && symbolIndex >= 0) {
+            std::string &line = lines[lineIndex].front();
+            if (symbolIndex < line.size()) {
+                line.erase(symbolIndex, numSymbols);
+                std::cout << "Text deleted successfully" << std::endl;
+            } else {
+                std::cout << "Symbol index is out of range" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid line index" << std::endl;
+        }
+    }
+
     void clear() {
         lines.clear();
         currentLine = 0;
@@ -124,7 +138,8 @@ int main() {
         std::cout << "5. Print current text" << std::endl;
         std::cout << "6. Insert text by line and symbol index" << std::endl;
         std::cout << "7. Search for text" << std::endl;
-        std::cout << "8. Clear the text" << std::endl;
+        std::cout << "8. Delete text" << std::endl;
+        std::cout << "9. Clear the text" << std::endl;
 
         int choice;
         std::cout << "Enter your choice: ";
@@ -183,6 +198,13 @@ int main() {
                 break;
             }
             case 8: {
+                int lineIndex, symbolIndex, numSymbols;
+                std::cout << "Choose line, index, and number of symbols to delete: ";
+                std::cin >> lineIndex >> symbolIndex >> numSymbols;
+                text.deleteText(lineIndex, symbolIndex, numSymbols);
+                break;
+            }
+            case 9: {
                 text.clear();
                 std::cout << "Text cleared" << std::endl;
                 break;
@@ -192,5 +214,6 @@ int main() {
             }
         }
     }
+
     return 0;
 }
